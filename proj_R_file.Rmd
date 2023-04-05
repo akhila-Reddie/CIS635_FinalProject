@@ -13,11 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Loading the dataset
 ```{r}
-path <- file.choose()
-```
-
-```{r}
-df <- read.csv(path)
+df <- read.csv("data.csv")
 head(df)
 ```
 
