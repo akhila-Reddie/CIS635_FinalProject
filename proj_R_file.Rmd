@@ -1,5 +1,5 @@
 ---
-title: "proj-Breast Cancer Detection"
+title: "proj-apr2023"
 output:
   pdf_document: default
   word_document: default
@@ -13,16 +13,11 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Loading the dataset
 ```{r}
-path <- file.choose()
-```
-
-```{r}
-df <- read.csv(path)
-df <- df[,-33]
+df <- read.csv("data.csv")
 head(df)
 ```
 
-Handling the NA Values with mean of the feature records and also omitting remaining NA value's records
+Handling the NA Values with mean of the feature records
 ```{r}
 df$radius_mean <- ifelse(is.na(df$radius_mean),
                      ave(df$radius_mean, FUN = function(x)mean(x, na.rm = TRUE)),
@@ -49,16 +44,16 @@ df$concavity_se = ifelse(is.na(df$concavity_se),
 
 Removing the ID Column as this doesn't affect the result
 ```{r}
-df <- df[,-1]
+df$id <- NULL
 ```
 
-Encoding the Categorical data for Diagnosis where 1 represents M (Malignant) and 2 represents B (Benign)
+Encoding the Categorical data for Diagnosis
 ```{r}
 df$diagnosis <- factor(df$diagnosis,levels = c('M','B'),labels = c(1, 2))
 head(df)
 ```
 
-Splitting the data into train and test data using dplyr package
+Splitting the data into train and test data using dplyr
 ```{r}
 library(dplyr)
 df$id <- 1:nrow(df)
@@ -66,11 +61,10 @@ df$id <- 1:nrow(df)
 # Splitting into 80-training and 20-test dataset
 trn <- df%>%dplyr::sample_frac(0.80)
 tst <- dplyr::anti_join(df,trn,by='id')
-```
-```{r}
-trn <- trn[,-32]
-tst <- trn[,-32]
-df <- df[,-32]
+
+trn$id <- NULL
+tst$id <- NULL
+df$id <- NULL
 ```
 ```{r}
 head(trn)
@@ -81,6 +75,7 @@ head(tst)
 
 Implementing decision tree classifier
 ```{r}
+library(caTools)
 library(party)
 dt <- ctree(diagnosis~., trn)
 plot(dt)
@@ -88,55 +83,11 @@ plot(dt)
 ```{r}
 dt
 ```
-Predicted output of test data
 ```{r}
-dt_pred <- predict(dt,tst)
-dt_pred
+pred <- predict(dt,tst)
+pred
 ```
-Confusion matrix for the decision tree model
 ```{r}
 library(caret)
-confusionMatrix(dt_pred, tst$diagnosis)
+confusionMatrix(pred, tst$diagnosis)
 ```
-
-Naive Bayes model
-```{r}
-library(e1071)
-nb <- naiveBayes(diagnosis ~ ., data = trn)
-nb_pred <- predict(nb, newdata = tst)
-confusionMatrix(nb_pred, tst$diagnosis)
-```
-
-SVM model for different kernels
-```{r}
-library(e1071)
-# Linear kernel
-svm <- svm(diagnosis ~ ., data = trn, kernel = "linear")
-svm_pred <- predict(svm, newdata = tst)
-confusionMatrix(svm_pred, as.factor(tst$diagnosis))
-```
-```{r}
-# Radial kernel
-svm <- svm(diagnosis ~ ., data = trn, kernel = "radial")
-svm_pred <- predict(svm, newdata = tst)
-confusionMatrix(svm_pred, tst$diagnosis)
-```
-```{r}
-# Sigmoid kernel
-svm <- svm(diagnosis ~ ., data = trn, kernel = "sigmoid")
-svm_pred <- predict(svm, newdata = tst)
-confusionMatrix(svm_pred, tst$diagnosis)
-```
-```{r}
-# Polynomial kernel
-svm <- svm(diagnosis ~ ., data = trn, kernel = "polynomial")
-svm_pred <- predict(svm, newdata = tst)
-confusionMatrix(svm_pred, tst$diagnosis)
-```
-
-
-
-
-
-
-
